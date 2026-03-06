@@ -1,108 +1,981 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mi AI Coach</title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 20px; background: #f2f2f7; margin: 0;}
-        .container { background: white; padding: 25px 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-        h1 { text-align: center; color: #1c1c1e; font-size: 24px; }
-        label { font-weight: 600; margin-top: 15px; display: block; color: #3a3a3c; font-size: 14px;}
-        input, textarea, button { width: 100%; margin-top: 8px; margin-bottom: 10px; padding: 12px; border-radius: 10px; border: 1px solid #c7c7cc; box-sizing: border-box; font-size: 16px; }
-        button { background: #007aff; color: white; font-weight: bold; border: none; cursor: pointer; margin-top: 20px;}
-        button:active { background: #005bb5; }
-        #resultado { background: #e5f1ff; padding: 15px; border-radius: 12px; display: none; margin-top: 20px;}
-        #planTexto { color: #333; line-height: 1.5; font-size: 15px; word-break: break-word; }
-        #planTexto strong { color: #1c1c1e; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#F9F9F8">
+<title>Vellum Budget</title>
+
+<link rel="manifest" href='data:application/manifest+json,{"name":"Vellum Budget","short_name":"Vellum","display":"standalone","background_color":"#F9F9F8","theme_color":"#111111","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/3665/3665910.png","sizes":"512x512","type":"image/png"}]}'>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ==========================================================================
+   EDITORIAL RESET & VARIABLES
+   ========================================================================== */
+*, *::before, *::after { 
+  margin: 0; 
+  padding: 0; 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent; 
+}
+
+:root {
+  /* High-End Editorial Palette */
+  --bg-paper: #F9F9F8;       /* Alabaster / Bone */
+  --bg-white: #FFFFFF;
+  --bg-ink-light: #F0F0EE;
+  
+  --ink-pure: #111111;       /* Stark Black */
+  --ink-muted: #666666;      /* Charcoal Grey */
+  --ink-faded: #999999;
+  
+  --hairline: #E2E2DF;       /* 1px structural lines */
+  --hairline-dark: #111111;  /* Bold structural lines */
+
+  --deficit: #8B3A3A;        /* Muted Burgundy for negatives */
+  
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
+  --safe-top: env(safe-area-inset-top, 40px);
+}
+
+html, body {
+  height: 100%; 
+  height: 100dvh;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: var(--ink-pure);
+  background-color: var(--bg-paper);
+  overflow: hidden; 
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app { 
+  display: flex; 
+  height: 100%; 
+  position: relative; 
+  z-index: 1; 
+}
+
+/* ==========================================================================
+   EDITORIAL NAVIGATION
+   ========================================================================== */
+#bottom-nav {
+  position: fixed; 
+  bottom: 0; 
+  left: 0; 
+  right: 0;
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center;
+  padding: 0 16px calc(var(--safe-bottom) + 8px);
+  background: var(--bg-paper);
+  border-top: 1px solid var(--hairline);
+  z-index: 100;
+}
+
+.nav-btn {
+  background: transparent; 
+  border: none; 
+  color: var(--ink-faded);
+  font-family: 'Inter', sans-serif; 
+  font-size: 9px; 
+  font-weight: 500; 
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer; 
+  display: flex; 
+  flex-direction: column; 
+  align-items: center; 
+  gap: 6px;
+  padding: 16px 0 8px; 
+  flex: 1; 
+  transition: color 0.2s ease;
+}
+
+.nav-icon { 
+  font-size: 16px; 
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+}
+
+.nav-btn.on { color: var(--ink-pure); }
+.nav-btn.on .nav-icon { font-weight: 700; }
+
+/* ==========================================================================
+   MAIN LAYOUT & PANELS
+   ========================================================================== */
+#main-area { 
+  flex: 1; 
+  display: flex; 
+  flex-direction: column; 
+  height: 100%; 
+  overflow: hidden; 
+}
+
+.panel { 
+  display: none; 
+  flex-direction: column; 
+  height: 100%; 
+  min-height: 0; 
+}
+
+.panel.on { 
+  display: flex; 
+  animation: fadeIn 0.4s ease-out forwards; 
+}
+
+@keyframes fadeIn { 
+  from { opacity: 0; } 
+  to { opacity: 1; } 
+}
+
+.fixed-top { 
+  flex-shrink: 0; 
+  padding: var(--safe-top) 20px 0; 
+  position: relative; 
+  z-index: 2; 
+  background: var(--bg-paper);
+}
+
+.scroll-zone { 
+  flex: 1; 
+  overflow-y: auto; 
+  -webkit-overflow-scrolling: touch; 
+  padding: 0 20px 100px; 
+  min-height: 0; 
+}
+.scroll-zone::-webkit-scrollbar { width: 0; }
+
+/* ==========================================================================
+   TYPOGRAPHY & HERO (LEDGER STYLE)
+   ========================================================================== */
+.editorial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--hairline-dark);
+  margin-bottom: 24px;
+}
+
+.brand-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  text-transform: uppercase;
+  line-height: 1;
+}
+
+.month-ctrl {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.month-ctrl button {
+  background: none; border: none; cursor: pointer; color: var(--ink-pure);
+  font-size: 14px; padding: 4px;
+}
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.hero-block {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--ink-muted);
+  margin-bottom: 8px;
+}
+
+.hero-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.hero-val.deficit { color: var(--deficit); }
+
+.action-link {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  cursor: pointer;
+  margin-top: 12px;
+  display: inline-block;
+}
+
+/* ==========================================================================
+   METRICS (Minimalist Data)
+   ========================================================================== */
+.metrics-table {
+  display: flex;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  margin-bottom: 32px;
+}
+
+.metric-cell {
+  flex: 1;
+  padding: 16px 0;
+  border-right: 1px solid var(--hairline);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.metric-cell:last-child { border-right: none; }
+
+.metric-lbl {
+  font-size: 9px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-muted);
+  margin-bottom: 4px;
+}
+
+.metric-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+}
+
+/* ==========================================================================
+   BUDGET LEDGER LIST
+   ========================================================================== */
+.ledger-header {
+  display: grid;
+  grid-template-columns: 1fr 65px 65px 75px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--hairline-dark);
+  margin-bottom: 16px;
+}
+
+.lh-col {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--ink-muted);
+}
+.lh-col.right { text-align: right; }
+
+.group-wrap { margin-bottom: 32px; }
+
+.group-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.group-name {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px;
+  font-weight: 600;
+  font-style: italic;
+  cursor: pointer;
+}
+
+.add-line-btn {
+  background: none; border: none; font-size: 16px;
+  color: var(--ink-muted); cursor: pointer;
+  font-family: 'Cormorant Garamond', serif;
+}
+
+.ledger-row {
+  display: grid;
+  grid-template-columns: 1fr 65px 65px 75px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--hairline);
+  cursor: pointer;
+}
+
+.lr-identity {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.lr-icon { font-size: 14px; opacity: 0.8;}
+.lr-name { font-size: 13px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+.lr-badge { font-size: 8px; border: 1px solid var(--ink-pure); padding: 1px 4px; text-transform: uppercase; margin-top: 2px; align-self: flex-start; }
+
+.lr-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 16px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.lr-assigned { color: var(--ink-muted); border-bottom: 1px dotted transparent; }
+.ledger-row:hover .lr-assigned { border-bottom-color: var(--ink-muted); }
+.lr-spent { color: var(--ink-faded); }
+.lr-avail { font-weight: 600; }
+.lr-avail.neg { color: var(--deficit); }
+
+.add-group-btn {
+  width: 100%; padding: 16px 0; background: transparent; 
+  border: 1px solid var(--hairline); border-style: dashed;
+  font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 2px;
+  cursor: pointer; color: var(--ink-muted); margin-top: 16px;
+}
+
+/* ==========================================================================
+   TRANSACTIONS (Journal)
+   ========================================================================== */
+.journal-date {
+  font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px;
+  padding: 24px 0 8px; border-bottom: 1px solid var(--hairline-dark); margin-bottom: 8px;
+}
+
+.journal-entry {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 0; border-bottom: 1px solid var(--hairline); cursor: pointer;
+}
+
+.je-left { display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+.je-payee { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.je-meta { font-size: 11px; color: var(--ink-muted); font-family: 'Cormorant Garamond', serif; font-style: italic;}
+
+.je-amt { font-family: 'Cormorant Garamond', serif; font-size: 18px; }
+.je-amt.neg { color: var(--ink-pure); }
+.je-amt.pos { color: var(--ink-muted); }
+.je-amt.transfer { color: var(--ink-faded); }
+
+.empty-state { text-align: center; padding: 60px 0; color: var(--ink-faded); font-family: 'Cormorant Garamond', serif; font-size: 18px; font-style: italic; }
+
+/* ==========================================================================
+   ACCOUNTS & GOALS (Index Cards)
+   ========================================================================== */
+.section-headline {
+  font-family: 'Cormorant Garamond', serif; font-size: 36px; font-weight: 400; 
+  margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid var(--hairline-dark);
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+
+.idx-card {
+  padding: 20px 0; border-bottom: 1px solid var(--hairline); cursor: pointer;
+}
+.idx-top { display: flex; justify-content: space-between; align-items: baseline; }
+.idx-title-wrap { display: flex; align-items: baseline; gap: 12px; }
+.idx-icon { font-size: 16px; }
+.idx-title { font-size: 15px; font-weight: 500; }
+.idx-type { font-family: 'Cormorant Garamond', serif; font-size: 13px; font-style: italic; color: var(--ink-muted); }
+.idx-val { font-family: 'Cormorant Garamond', serif; font-size: 24px; }
+.idx-val.neg { color: var(--deficit); }
+
+/* Progress line */
+.idx-meta { display: flex; justify-content: space-between; margin-top: 16px; font-size: 11px; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 1px;}
+.prog-line { height: 1px; background: var(--hairline); margin-top: 8px; position: relative; }
+.prog-fill { height: 2px; background: var(--ink-pure); position: absolute; left: 0; top: -0.5px; transition: width 1s; }
+
+/* ==========================================================================
+   FAB & UNDO
+   ========================================================================== */
+#fab {
+  position: fixed; right: 20px; bottom: calc(var(--safe-bottom) + 80px);
+  width: 48px; height: 48px;
+  background: var(--ink-pure); color: var(--bg-white);
+  border: none; border-radius: 0; /* Square brutalist button */
+  font-size: 24px; font-weight: 300; display: flex; align-items: center; justify-content: center;
+  z-index: 200; cursor: pointer;
+  transition: transform 0.2s;
+}
+#fab:active { transform: scale(0.9); }
+
+#undo-fab {
+  position: fixed; left: 20px; bottom: calc(var(--safe-bottom) + 84px);
+  background: var(--bg-paper); color: var(--ink-pure); border: 1px solid var(--ink-pure);
+  padding: 10px 20px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;
+  z-index: 200; cursor: pointer;
+  transition: all 0.3s; opacity: 0; pointer-events: none; transform: translateY(10px);
+}
+#undo-fab.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+/* ==========================================================================
+   MODALS (Full-screen minimal sheets)
+   ========================================================================== */
+.overlay { 
+  position: fixed; inset: 0; background: var(--bg-paper); 
+  z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s; 
+  overflow-y: auto; padding: var(--safe-top) 20px calc(var(--safe-bottom) + 20px);
+}
+.overlay.open { opacity: 1; pointer-events: auto; }
+
+.sheet-hdr {
+  display: flex; justify-content: space-between; align-items: center;
+  padding-bottom: 16px; border-bottom: 2px solid var(--hairline-dark); margin-bottom: 32px;
+}
+.sheet-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 500; }
+.close-btn { background: none; border: none; font-size: 24px; cursor: pointer; font-family: 'Inter', sans-serif; font-weight: 300; }
+
+.f-inp {
+  width: 100%; padding: 12px 0;
+  background: transparent; border: none; border-bottom: 1px solid var(--hairline-dark);
+  border-radius: 0; color: var(--ink-pure);
+  font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 400;
+  margin-bottom: 32px; outline: none; -webkit-appearance: none;
+}
+.f-inp:focus { border-bottom-width: 2px; }
+.f-inp::placeholder { color: var(--ink-faded); }
+
+.f-inp.huge {
+  font-family: 'Cormorant Garamond', serif; font-size: 48px; text-align: center;
+  margin-bottom: 40px; border-bottom: 1px solid var(--hairline);
+}
+
+.f-label { display: block; font-size: 9px; font-weight: 600; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;}
+.f-hint { font-family: 'Cormorant Garamond', serif; font-size: 14px; font-style: italic; color: var(--ink-muted); margin: -20px 0 32px 0; }
+
+select.f-inp { cursor: pointer; }
+
+/* Buttons */
+.btn-primary { background: var(--ink-pure); color: var(--bg-white); border: none; padding: 16px; width: 100%; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; margin-bottom: 12px; }
+.btn-danger { background: transparent; color: var(--deficit); border: 1px solid var(--deficit); padding: 16px; width: 100%; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; }
+.btn-ghost { background: transparent; color: var(--ink-pure); border: 1px solid var(--ink-pure); padding: 16px; width: 100%; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; margin-bottom: 12px; }
+
+.tx-btn-row { display: flex; gap: 12px; margin-bottom: 32px; }
+.tx-btn-row > button { flex: 1; margin-bottom: 0; }
+
+.seg-tabs { display: flex; border: 1px solid var(--hairline-dark); margin-bottom: 32px;}
+.seg-tab { flex: 1; padding: 14px; text-align: center; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-muted); border: none; background: transparent; cursor: pointer; }
+.seg-tab.active { background: var(--ink-pure); color: var(--bg-white); }
+
+/* Custom Modal Layout tweaks */
+.mod-block { border: 1px solid var(--hairline); padding: 20px; margin-bottom: 32px; }
+.mod-row { display: flex; justify-content: space-between; padding: 8px 0; font-family: 'Cormorant Garamond', serif; font-size: 18px; }
+.mod-lbl { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--ink-muted); }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🏃‍♂️ AI Coach</h1>
-        
-        <label for="comida">¿Qué has comido hoy?</label>
-        <textarea id="comida" rows="3" placeholder="Ej: He comido pollo..."></textarea>
-        
-        <label for="pantallazo">Sube captura (Opcional):</label>
-        <input type="file" id="pantallazo" accept="image/*">
-        
-        <button onclick="generarPlan()" id="btnGenerar">Generar Plan</button>
-        
-        <div id="resultado">
-            <h3 style="margin-top:0; color: #007aff;">Resultado:</h3>
-            <p id="planTexto"></p>
-        </div>
+<div id="app">
+  <div id="main-area">
+
+<!-- TAB: BUDGET -->
+<div id="panel-budget" class="panel on">
+  <div class="fixed-top">
+    <div class="editorial-header">
+      <div class="brand-title">Vellum</div>
+      <div class="month-ctrl">
+        <button onclick="changeMonth(-1)">—</button>
+        <span id="month-display">Mes</span>
+        <button onclick="changeMonth(1)">+</button>
+      </div>
+    </div>
+    
+    <div class="hero-grid">
+      <div class="hero-block">
+        <span class="hero-label">Patrimonio</span>
+        <span class="hero-val" id="total-money">0 €</span>
+      </div>
+      <div class="hero-block">
+        <span class="hero-label">Por Asignar</span>
+        <span class="hero-val" id="to-assign">0 €</span>
+        <span class="action-link" onclick="openSheet('assign')">Asignar Fondos</span>
+      </div>
     </div>
 
-    <script>
-        const API_KEY = 'AIzaSyATzMmKBpEzwehtbOPFJLOfH64U_r97J_U'; 
+    <div class="metrics-table">
+      <div class="metric-cell"><span class="metric-lbl">Ingresos</span><span class="metric-num" id="p-inc">0 €</span></div>
+      <div class="metric-cell"><span class="metric-lbl">Asignado</span><span class="metric-num" id="p-asg">0 €</span></div>
+      <div class="metric-cell"><span class="metric-lbl">Gastos</span><span class="metric-num" id="p-exp">0 €</span></div>
+    </div>
+    
+    <div class="ledger-header">
+      <span class="lh-col">Índice</span>
+      <span class="lh-col right">Plan</span>
+      <span class="lh-col right">Real</span>
+      <span class="lh-col right">Disp.</span>
+    </div>
+  </div>
+  <div class="scroll-zone"><div id="budget-content"></div></div>
+</div>
 
-        async function prepararImagen(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => { resolve({ inlineData: { data: reader.result.split(',')[1], mimeType: file.type } }); };
-                reader.readAsDataURL(file);
-            });
+<!-- TAB: ACCOUNTS -->
+<div id="panel-accounts" class="panel">
+  <div class="fixed-top">
+    <div class="section-headline">
+      <span>Cuentas</span>
+      <button class="add-line-btn" onclick="openNewAccount()">+</button>
+    </div>
+    <div style="font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:1px; color:var(--ink-muted); margin-bottom: 24px;">Neto: <span id="acct-total-val" style="font-family:'Cormorant Garamond',serif; font-size:18px; color:var(--ink-pure); margin-left:8px;">0 €</span></div>
+  </div>
+  <div class="scroll-zone"><div id="accounts-content"></div></div>
+</div>
+
+<!-- TAB: TRANSACTIONS -->
+<div id="panel-tx" class="panel">
+  <div class="fixed-top">
+    <div class="section-headline">
+      <span>Diario</span>
+      <div class="month-ctrl" style="font-size: 14px;">
+        <button onclick="changeMonth(-1)">—</button>
+        <span id="tx-month-label" style="font-family:'Inter',sans-serif; font-size:11px; text-transform:uppercase;">Mes</span>
+        <button onclick="changeMonth(1)">+</button>
+      </div>
+    </div>
+    <div style="display:flex; justify-content:space-between; font-size:10px; font-weight:600; text-transform:uppercase; color:var(--ink-muted); padding-bottom:16px; letter-spacing:1px;">
+      <span id="tx-count">0 reg</span>
+      <span>Entradas: <span id="tx-sum-inc" style="color:var(--ink-pure)">0 €</span> &nbsp;|&nbsp; Salidas: <span id="tx-sum-exp" style="color:var(--ink-pure)">0 €</span></span>
+    </div>
+  </div>
+  <div class="scroll-zone"><div id="tx-content"></div></div>
+</div>
+
+<!-- TAB: GOALS -->
+<div id="panel-goals" class="panel">
+  <div class="fixed-top">
+    <div class="section-headline">
+      <span>Metas</span>
+      <button class="add-line-btn" onclick="openNewGoal()">+</button>
+    </div>
+  </div>
+  <div class="scroll-zone"><div id="goals-content"></div></div>
+</div>
+
+<!-- TAB: SETTINGS -->
+<div id="panel-settings" class="panel">
+  <div class="fixed-top">
+    <div class="section-headline"><span>Ajustes</span></div>
+  </div>
+  <div class="scroll-zone">
+    <span class="f-label" style="margin-top:24px;">Archivo</span>
+    <button class="btn-ghost" onclick="exportData()">Exportar Documento</button>
+    <button class="btn-ghost" onclick="document.getElementById('imp-file').click()">Importar Documento</button>
+    <input type="file" id="imp-file" accept=".json" style="display:none" onchange="importData(event)">
+    
+    <span class="f-label" style="margin-top:40px;">Sistema</span>
+    <button class="btn-danger" onclick="confirmAction('Esta acción destruirá todos los registros actuales. ¿Proceder?', resetApp)">Purgar Registros</button>
+    
+    <div style="margin-top:100px;text-align:center;">
+      <div style="font-family:'Cormorant Garamond',serif; font-size:24px; font-style:italic;">Vellum</div>
+      <div style="font-size:9px; font-weight:600; letter-spacing:2px; text-transform:uppercase; margin-top:8px; color:var(--ink-muted);">Editorial Edition</div>
+    </div>
+  </div>
+</div>
+
+  </div>
+
+<button id="fab" onclick="openNewTx()">+</button>
+<button id="undo-fab" onclick="undoAction()">Deshacer</button>
+
+  <nav id="bottom-nav">
+    <button class="nav-btn on" onclick="nav(event,'budget')"><span class="nav-icon">I</span>Presupuesto</button>
+    <button class="nav-btn" onclick="nav(event,'accounts')"><span class="nav-icon">II</span>Cuentas</button>
+    <button class="nav-btn" onclick="nav(event,'tx')"><span class="nav-icon">III</span>Diario</button>
+    <button class="nav-btn" onclick="nav(event,'goals')"><span class="nav-icon">IV</span>Metas</button>
+    <button class="nav-btn" onclick="nav(event,'settings')"><span class="nav-icon">V</span>Ajustes</button>
+  </nav>
+</div>
+
+<!-- ==========================================================================
+     MODALS (OVERLAYS)
+     ========================================================================== -->
+
+<div class="overlay" id="ov-tx">
+  <div class="sheet-hdr"><span class="sheet-title" id="tx-title">Asiento Contable</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <input type="number" id="f-amt" class="f-inp huge" placeholder="0.00" inputmode="decimal" step="0.01">
+  <span class="f-label">Concepto</span><input type="text" id="f-payee" class="f-inp" placeholder="Descripción">
+  <span class="f-label">Fecha</span><input type="date" id="f-date" class="f-inp">
+  <span class="f-label">Cuenta Origen/Destino</span><select id="f-acct" class="f-inp"></select>
+  <div id="f-cat-wrap"><span class="f-label">Categoría</span><select id="f-cat" class="f-inp"></select></div>
+  
+  <div id="tx-create-box">
+    <div class="seg-tabs" style="margin-bottom:16px;">
+      <button class="seg-tab active" id="adj-pos" onclick="setAdjustSign(1)">+ Ingreso</button>
+      <button class="seg-tab" id="adj-neg" onclick="setAdjustSign(-1)">- Gasto</button>
+    </div>
+    <button class="btn-primary" onclick="saveTxFlow()">Registrar Operación</button>
+    <div style="margin: 32px 0 16px; border-top: 1px dashed var(--hairline-dark); padding-top: 24px;">
+      <span class="f-label">Transferencia Interna</span>
+      <select id="f-acct-to" class="f-inp"></select>
+      <button class="btn-ghost" onclick="saveTx('transfer')">Ejecutar Traspaso</button>
+    </div>
+  </div>
+  <div id="tx-edit-box" style="display:none;flex-direction:column;">
+    <button class="btn-primary" onclick="updateTx()">Modificar</button>
+    <button class="btn-danger" onclick="deleteTx()">Eliminar</button>
+  </div>
+</div>
+
+<div class="overlay" id="ov-edit-cat">
+  <div class="sheet-hdr"><span class="sheet-title">Editar Categoría</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <div style="display:flex;gap:16px;"><input type="text" id="e-c-emoji" class="f-inp" style="width:60px;text-align:center;"><input type="text" id="e-c-name" class="f-inp" style="flex:1"></div>
+  <div id="cat-goal-info" class="mod-block" style="display:none;"><div class="mod-row"><span class="mod-lbl">Meta</span><span id="cat-goal-name"></span></div></div>
+  <button class="btn-primary" onclick="updateCat()">Guardar</button>
+  <button class="btn-danger" onclick="deleteCat()">Suprimir</button>
+</div>
+
+<div class="overlay" id="ov-new-cat">
+  <div class="sheet-hdr"><span class="sheet-title">Nueva Categoría</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <div style="display:flex;gap:16px;"><input type="text" id="n-c-emoji" class="f-inp" placeholder="—" style="width:60px;text-align:center;"><input type="text" id="n-c-name" class="f-inp" placeholder="Nombre" style="flex:1"></div>
+  <button class="btn-primary" onclick="addCat()">Registrar</button>
+</div>
+
+<div class="overlay" id="ov-edit-group">
+  <div class="sheet-hdr"><span class="sheet-title">Modificar Grupo</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <span class="f-label">Nombre</span><input type="text" id="e-g-name" class="f-inp">
+  <button class="btn-primary" onclick="updateGroup()">Guardar</button>
+  <button class="btn-danger" onclick="deleteGroup()">Suprimir</button>
+</div>
+
+<div class="overlay" id="ov-new-group">
+  <div class="sheet-hdr"><span class="sheet-title">Nuevo Grupo</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <span class="f-label">Nombre</span><input type="text" id="n-g-name" class="f-inp" placeholder="Clasificación">
+  <button class="btn-primary" onclick="addGroup()">Crear</button>
+</div>
+
+<div class="overlay" id="ov-goal">
+  <div class="sheet-hdr"><span class="sheet-title" id="goal-modal-title">Objetivo</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <span class="f-label">Nombre</span><input type="text" id="n-l-name" class="f-inp">
+  <span class="f-label">Cifra Objetivo</span><input type="number" id="n-l-target" class="f-inp" step="0.01">
+  <div id="goal-edit-progress-wrap" class="mod-block" style="display:none;"><div class="mod-row"><span class="mod-lbl">Avance</span><span id="goal-edit-progress"></span></div></div>
+  <span class="f-label">Mecanismo</span>
+  <select id="n-l-mode" class="f-inp" onchange="onGoalModeChange()"><option value="linked">Sincronizado a Categoría</option><option value="manual">Gestión Manual</option></select>
+  <div id="goal-cat-section"><span class="f-label">Categoría de origen</span><select id="n-l-cat" class="f-inp"></select></div>
+  <span class="f-label">Fecha (Opcional)</span><input type="date" id="n-l-date" class="f-inp">
+  <div id="goal-create-box"><button class="btn-primary" onclick="saveGoal()">Proyectar</button></div>
+  <div id="goal-edit-box" style="display:none;flex-direction:column;"><button class="btn-primary" onclick="updateGoal()">Guardar</button><button class="btn-danger" onclick="deleteGoalAction()">Abandonar</button></div>
+</div>
+
+<div class="overlay" id="ov-goal-deposit">
+  <div class="sheet-hdr"><span class="sheet-title">Aporte Manual</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <div class="mod-block" style="text-align:center;">
+    <div id="deposit-goal-name" style="font-family:'Cormorant Garamond',serif; font-size:24px; margin-bottom:4px;"></div>
+    <div id="deposit-goal-progress" class="mod-lbl"></div>
+  </div>
+  <input type="number" id="dep-amt" class="f-inp huge" placeholder="0.00" inputmode="decimal" step="0.01">
+  <div style="display:flex;gap:12px;"><button class="btn-primary" style="flex:1" onclick="doGoalDeposit(1)">Ingresar</button><button class="btn-ghost" style="flex:1" onclick="doGoalDeposit(-1)">Retirar</button></div>
+</div>
+
+<div class="overlay" id="ov-assign">
+  <div class="sheet-hdr"><span class="sheet-title">Distribución</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <span class="f-label">Destino</span><select id="a-cat" class="f-inp"></select>
+  <span class="f-label">Provisión</span><input type="number" id="a-amt" class="f-inp huge" placeholder="0.00" step="0.01">
+  <button class="btn-primary" onclick="confirmAssign()">Transferir Fondos</button>
+</div>
+
+<div class="overlay" id="ov-assign-cat">
+  <div class="sheet-hdr"><span class="sheet-title" id="ac-title">Provisión</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <div id="ac-cat-name" style="font-family:'Cormorant Garamond',serif; font-size:28px; text-align:center; margin-bottom:24px; font-style:italic;"></div>
+  <div class="mod-block">
+    <div class="mod-row"><span class="mod-lbl">Proyectado</span><span id="ac-current">0 €</span></div>
+    <div class="mod-row"><span class="mod-lbl">Consumido</span><span id="ac-spent">0 €</span></div>
+    <div class="mod-row" style="margin-top:8px; padding-top:8px; border-top:1px solid var(--hairline);"><span class="mod-lbl" style="color:var(--ink-pure)">Remanente</span><span id="ac-avail" style="font-weight:600;">0 €</span></div>
+  </div>
+  <div class="seg-tabs"><button class="seg-tab active" id="tab-set" onclick="setAssignMode('set')">Absoluto</button><button class="seg-tab" id="tab-add" onclick="setAssignMode('add')">Relativo (±)</button></div>
+  <input type="number" id="ac-amt" class="f-inp huge" placeholder="0.00" step="0.01">
+  <button class="btn-primary" onclick="confirmAssignCat()">Ejecutar</button>
+</div>
+
+<div class="overlay" id="ov-account">
+  <div class="sheet-hdr"><span class="sheet-title" id="acct-modal-title">Entidad</span><button class="close-btn" onclick="closeSheet()">×</button></div>
+  <div style="display:flex;gap:16px;"><input type="text" id="n-a-emoji" class="f-inp" placeholder="—" style="width:60px;text-align:center;"><input type="text" id="n-a-name" class="f-inp" placeholder="Nombre" style="flex:1"></div>
+  <span class="f-label">Naturaleza</span>
+  <select id="n-a-type" class="f-inp"><option value="checking">Depósito</option><option value="savings">Reserva</option><option value="cash">Liquidez</option><option value="credit">Crédito</option></select>
+  <div id="acct-create-box"><button class="btn-primary" onclick="saveAccount()">Registrar Entidad</button></div>
+  <div id="acct-edit-box" style="display:none;flex-direction:column;"><button class="btn-primary" onclick="updateAccount()">Actualizar</button><button class="btn-danger" onclick="deleteAccount()">Clausurar</button></div>
+</div>
+
+<div class="overlay" id="ov-confirm">
+  <div class="sheet-hdr"><span class="sheet-title">Confirmación</span></div>
+  <p id="confirm-msg" style="font-family:'Cormorant Garamond',serif; font-size:20px; line-height:1.4; margin-bottom:40px; text-align:center;"></p>
+  <button class="btn-primary" id="confirm-yes" style="margin-bottom:12px;">Proceder</button>
+  <button class="btn-ghost" id="confirm-cancel" onclick="closeConfirm()">Anular</button>
+</div>
+
+<script>
+'use strict';
+
+/* ==========================================================================
+   STATE & INITIALIZATION
+   ========================================================================== */
+let DB = { groups: [], txs: [], assignments: {}, goals: [], accounts: [] };
+let curMonth = new Date();
+
+let activeCatId = null, activeGroupId = null, activeTxId = null, activeGoalId = null, activeAcctId = null;
+let assignMode = 'set', assignCatId = null, adjustSign = 1;
+let undoSnapshot = null, undoTimer = null, confirmCallback = null;
+
+const ACCT_TYPE_LABELS = { checking: 'Depósito', savings: 'Reserva', cash: 'Liquidez', credit: 'Crédito' };
+
+window.onload = init;
+
+function init() {
+    try {
+        const s = localStorage.getItem('ma_pergamino_v9');
+        if (s) { DB = JSON.parse(s); migrateDB(); } 
+        else {
+            DB.accounts = [{ id: 'acc_default', name: 'Cuenta Base', emoji: 'I', type: 'checking' }];
+            DB.groups = [{ id: 'g1', name: 'Operativa', cats: [{ id: 'c1', name: 'Mantenimiento', emoji: '—' }, { id: 'c2', name: 'Consumo', emoji: '—' }] }];
         }
+    } catch (e) { DB = { groups: [], txs: [], assignments: {}, goals: [], accounts: [] }; }
+    
+    document.getElementById('confirm-yes').addEventListener('click', handleConfirmYes);
+    updateUI(['all']); registerSW();
+}
 
-        async function generarPlan() {
-            const comida = document.getElementById('comida').value;
-            const pantallazo = document.getElementById('pantallazo').files[0];
-            const resultadoDiv = document.getElementById('resultado');
-            const planTexto = document.getElementById('planTexto');
-            const btnGenerar = document.getElementById('btnGenerar');
-
-            if(!comida && !pantallazo) return alert("Añade algo de info.");
-
-            btnGenerar.disabled = true;
-            btnGenerar.innerText = "Pensando...";
-            resultadoDiv.style.display = 'block';
-            planTexto.innerHTML = "<em>Analizando... ⏳</em>";
-
-            try {
-                let promptText = `Eres mi entrenador. Objetivo: fuerza 2 días, correr 2 días. Hoy comí: "${comida}". `;
-                if (pantallazo) promptText += "Analiza la imagen adjunta de mi Apple Watch. ";
-                promptText += "Dame un plan detallado, corto y directo.";
-
-                const contents = [];
-                const parts = [{ text: promptText }];
-                if (pantallazo) {
-                    parts.push(await prepararImagen(pantallazo));
-                }
-                contents.push({ parts: parts });
-
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: contents })
-                });
-
-                // ESTA ES LA PARTE NUEVA QUE ATRAPARÁ EL ERROR EXACTO
-                if (!response.ok) {
-                    const errorGoogle = await response.text();
-                    throw new Error(`Error de Google (${response.status}): ${errorGoogle}`);
-                }
-
-                const data = await response.json();
-                
-                if (!data.candidates || data.candidates.length === 0) {
-                     throw new Error("Google no ha devuelto ningún candidato de texto.");
-                }
-
-                let respuestaIA = data.candidates[0].content.parts[0].text;
-                respuestaIA = respuestaIA.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\*/g, '•').replace(/\n/g, '<br>');
-                planTexto.innerHTML = respuestaIA;
-
-            } catch (error) {
-                console.error(error);
-                // Ahora te mostrará el error real en rojo en tu móvil
-                planTexto.innerHTML = `<span style="color:red;">❌ <strong>Fallo:</strong> ${error.message}</span>`;
-            } finally {
-                btnGenerar.disabled = false;
-                btnGenerar.innerText = "Generar Plan";
-            }
+function migrateDB() {
+    if (!DB.goals) DB.goals = [];
+    if (!DB.txs) DB.txs = [];
+    if (!DB.groups) DB.groups = [];
+    if (!DB.assignments) DB.assignments = {};
+    if (!DB.accounts || DB.accounts.length === 0) DB.accounts = [{ id: 'acc_default', name: 'Base', emoji: 'I', type: 'checking' }];
+    const def = DB.accounts[0].id;
+    DB.txs.forEach(t => { if (!t.acct && t.type !== 'transfer') t.acct = def; if (t.type === 'transfer') { if (!t.acctFrom) t.acctFrom = def; if (!t.acctTo) t.acctTo = def; } });
+    DB.goals.forEach(g => { if (!g.mode) g.mode = g.cid ? 'linked' : 'manual'; if (g.mode === 'manual' && g.saved === undefined) g.saved = 0; });
+    const fa = {};
+    Object.keys(DB.assignments).forEach(k => {
+        const p = k.split('-');
+        if (p.length === 2) {
+            const f = p[0] + '-' + String(parseInt(p[1])).padStart(2, '0');
+            if (!fa[f]) fa[f] = {};
+            Object.keys(DB.assignments[k]).forEach(c => { fa[f][c] = r((fa[f][c] || 0) + DB.assignments[k][c]); });
         }
-    </script>
+    });
+    DB.assignments = fa;
+}
+
+function save() { try { localStorage.setItem('ma_pergamino_v9', JSON.stringify(DB)); } catch (e) {} }
+
+/* ==========================================================================
+   UTILITY
+   ========================================================================== */
+function r(num) { return Math.round((num + Number.EPSILON) * 100) / 100; }
+function fmt(n) { return new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(r(n)); }
+function getMk(d) { if (typeof d === 'string') { const p = d.split('-'); return p[0] + '-' + String(parseInt(p[1])).padStart(2, '0'); } return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
+function getCurMonthDateDefault() { const t = new Date(); if (getMk(curMonth) === getMk(t)) return t.toISOString().split('T')[0]; return getMk(curMonth) + '-01'; }
+function changeMonth(n) { const d = new Date(curMonth); d.setMonth(d.getMonth() + n); curMonth = d; updateUI(['all']); }
+function esc(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+/* ==========================================================================
+   DATA & CALCULATIONS
+   ========================================================================== */
+function findCat(id) { for (const g of DB.groups) { const c = g.cats.find(x => x.id === id); if (c) return c; } return null; }
+function findAcct(id) { return DB.accounts.find(x => x.id === id) || null; }
+function findGoalByCat(cid) { return DB.goals.find(g => g.mode === 'linked' && g.cid === cid) || null; }
+function getMonthsRemaining(ds) { if (!ds) return null; const [yy, mm, dd] = ds.split('-'); const d = new Date(yy, mm - 1, dd); if (isNaN(d.getTime())) return null; const n = new Date(); return (d.getFullYear() - n.getFullYear()) * 12 + (d.getMonth() - n.getMonth()); }
+
+function getAcctBalance(id) {
+    let b = 0;
+    DB.txs.forEach(t => {
+        if (t.type === 'income' && t.acct === id) b = r(b + t.amt);
+        else if (t.type === 'expense' && t.acct === id) b = r(b - t.amt);
+        else if (t.type === 'adjustment' && t.acct === id) b = r(b + t.amt);
+        else if (t.type === 'transfer') { if (t.acctFrom === id) b = r(b - t.amt); if (t.acctTo === id) b = r(b + t.amt); }
+    }); return b;
+}
+function getTotalMoney() { let t = 0; DB.accounts.forEach(a => { t = r(t + getAcctBalance(a.id)); }); return t; }
+
+function getToAssign(dateObj) {
+    const mk = getMk(dateObj); let inf = 0;
+    DB.txs.forEach(t => { const tm = getMk(t.date); if (tm > mk) return; if (t.type === 'income' && !t.cat) inf = r(inf + t.amt); else if (t.type === 'adjustment') inf = r(inf + t.amt); });
+    let asg = 0; Object.keys(DB.assignments).forEach(m => { if (m > mk) return; Object.values(DB.assignments[m]).forEach(v => asg = r(asg + v)); });
+    return r(inf - asg);
+}
+
+function getAvail(cid, dateObj) {
+    const mk = getMk(dateObj); let a = 0;
+    Object.keys(DB.assignments).forEach(m => { if (m > mk) return; a = r(a + (DB.assignments[m][cid] || 0)); });
+    let s = 0; DB.txs.forEach(t => { if (t.cat !== cid || getMk(t.date) > mk) return; if (t.type === 'expense') s = r(s + t.amt); else if (t.type === 'income') s = r(s - t.amt); });
+    return r(a - s);
+}
+function getGoalProgress(g) { if (g.mode === 'manual') return Math.max(0, g.saved || 0); if (!g.cid || !findCat(g.cid)) return 0; return Math.max(0, getAvail(g.cid, curMonth)); }
+
+/* ==========================================================================
+   UNDO
+   ========================================================================== */
+function pushUndo() { undoSnapshot = structuredClone(DB); showUndoButton(); }
+function showUndoButton() { clearTimeout(undoTimer); document.getElementById('undo-fab').classList.add('visible'); undoTimer = setTimeout(hideUndoButton, 10000); }
+function hideUndoButton() { document.getElementById('undo-fab').classList.remove('visible'); clearTimeout(undoTimer); }
+function undoAction() { if (!undoSnapshot) return; confirmAction('¿Revertir anotación previa?', function() { try { DB = structuredClone(undoSnapshot); undoSnapshot = null; hideUndoButton(); updateUI(['all']); } catch(e) { showAlert('Error.'); } }); }
+
+/* ==========================================================================
+   UI RENDERING
+   ========================================================================== */
+function commit(panels = ['all']) { closeSheet(); updateUI(panels); }
+
+function updateUI(panels = ['all']) {
+    const ml = curMonth.toLocaleDateString('es-ES', { month: 'short', year: 'numeric' }).replace('.','');
+    document.getElementById('month-display').innerText = ml;
+    document.getElementById('tx-month-label').innerText = ml;
+    
+    const ta = getToAssign(curMonth);
+    document.getElementById('to-assign').innerText = fmt(ta);
+    document.getElementById('to-assign').className = 'hero-val' + (ta < -0.01 ? ' deficit' : '');
+    
+    const tm = document.getElementById('total-money'); if (tm) tm.innerText = fmt(getTotalMoney());
+
+    if (panels.includes('all') || panels.includes('budget')) renderBudget();
+    if (panels.includes('all') || panels.includes('accounts')) renderAccounts();
+    if (panels.includes('all') || panels.includes('tx')) renderTxs();
+    if (panels.includes('all') || panels.includes('goals')) renderGoals();
+    
+    updatePills(); save();
+}
+
+function updatePills() {
+    const mk = getMk(curMonth); let inc = 0, adj = 0, exp = 0;
+    DB.txs.forEach(t => { if (getMk(t.date) === mk) { if (t.type === 'income') inc = r(inc + t.amt); if (t.type === 'adjustment') adj = r(adj + t.amt); if (t.type === 'expense') exp = r(exp + t.amt); } });
+    const asg = Object.values(DB.assignments[mk] || {}).reduce((s, v) => r(s + v), 0);
+    document.getElementById('p-inc').innerText = fmt(r(inc + adj)); document.getElementById('p-exp').innerText = fmt(exp); document.getElementById('p-asg').innerText = fmt(asg);
+}
+
+function renderBudget() {
+    const mk = getMk(curMonth), c = document.getElementById('budget-content'); let h = '';
+    DB.groups.forEach(g => {
+        const catsHTML = g.cats.map(cat => {
+            const av = getAvail(cat.id, curMonth), as = DB.assignments[mk]?.[cat.id] || 0;
+            const sp = DB.txs.filter(t => t.cat === cat.id && getMk(t.date) === mk).reduce((s, t) => { if (t.type === 'expense') return r(s + t.amt); if (t.type === 'income') return r(s - t.amt); return s; }, 0);
+            const gb = findGoalByCat(cat.id) ? `<span class="lr-badge">Meta</span>` : '';
+            return `<div class="ledger-row" onclick="openAssignCat('${cat.id}')">
+                <div class="lr-identity" onclick="event.stopPropagation(); openEditCat('${cat.id}')"><span class="lr-icon">${cat.emoji}</span><div style="display:flex; flex-direction:column; overflow:hidden;"><span class="lr-name">${esc(cat.name)}</span>${gb}</div></div>
+                <div class="lr-num lr-assigned">${fmt(as)}</div><div class="lr-num lr-spent">${fmt(sp)}</div><div class="lr-num lr-avail ${av < -0.004 ? 'neg' : ''}">${fmt(av)}</div>
+              </div>`;
+        }).join('');
+        h += `<div class="group-wrap"><div class="group-title-row"><span class="group-name" onclick="openEditGroup('${g.id}')">${esc(g.name)}</span><button class="add-line-btn" onclick="openAddCat('${g.id}')">+</button></div>${catsHTML}</div>`;
+    });
+    h += `<button class="add-group-btn" onclick="openSheet('new-group')">Agregar Clasificación</button>`;
+    c.innerHTML = h;
+}
+
+function renderAccounts() {
+    const c = document.getElementById('accounts-content'); let ta = 0, html = '';
+    DB.accounts.forEach(a => {
+        const b = getAcctBalance(a.id); ta = r(ta + b);
+        html += `<div class="idx-card" onclick="openEditAccount('${a.id}')"><div class="idx-top"><div class="idx-title-wrap"><span class="idx-icon">${a.emoji}</span><span class="idx-title">${esc(a.name)}</span><span class="idx-type">${ACCT_TYPE_LABELS[a.type]||a.type}</span></div><div class="idx-val ${b < -0.004 ? 'neg' : ''}">${fmt(b)}</div></div></div>`;
+    });
+    document.getElementById('acct-total-val').innerText = fmt(ta); c.innerHTML = html || '<p class="empty-state">Registro vacío.</p>';
+}
+
+function renderTxs() {
+    const mk = getMk(curMonth), filtered = DB.txs.filter(t => t.type !== 'adjustment' && getMk(t.date) === mk).sort((a, b) => { const da = new Date(a.date), db = new Date(b.date); return db - da || b.id - a.id; });
+    document.getElementById('tx-count').innerText = `${filtered.length} reg`; document.getElementById('tx-sum-inc').innerText = fmt(filtered.filter(t => t.type === 'income').reduce((s, t) => r(s + t.amt), 0)); document.getElementById('tx-sum-exp').innerText = fmt(filtered.filter(t => t.type === 'expense').reduce((s, t) => r(s + t.amt), 0));
+    const c = document.getElementById('tx-content'); if (!filtered.length) { c.innerHTML = '<p class="empty-state">Sin entradas.</p>'; return; }
+    const gr = {}; filtered.forEach(t => { if (!gr[t.date]) gr[t.date] = []; gr[t.date].push(t); }); let html = '';
+    Object.keys(gr).forEach(date => {
+        const [yy, mm, dd] = date.split('-'); const dObj = new Date(yy, mm - 1, dd);
+        html += `<div class="journal-date">${dObj.toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric' })}</div>`;
+        gr[date].forEach(t => {
+            let cn, ac, ad;
+            if (t.type === 'transfer') { const fr = findAcct(t.acctFrom), to = findAcct(t.acctTo); cn = (fr ? esc(fr.name) : '') + ' → ' + (to ? esc(to.name) : ''); ac = 'transfer'; ad = fmt(t.amt); } 
+            else if (t.type === 'expense') { cn = t.cat ? (findCat(t.cat)?.name || 'Varios') : 'Varios'; ac = 'neg'; ad = '−' + fmt(t.amt); } 
+            else { cn = t.cat ? (findCat(t.cat)?.name || 'Aporte') : 'Aporte'; ac = 'pos'; ad = '+' + fmt(t.amt); }
+            html += `<div class="journal-entry" onclick="openEditTx('${t.id}')"><div class="je-left"><span class="je-payee">${esc(t.payee || (t.type==='transfer'?'Traspaso':''))}</span><span class="je-meta">${esc(cn)}</span></div><span class="je-amt ${ac}">${ad}</span></div>`;
+        });
+    }); c.innerHTML = html;
+}
+
+function renderGoals() {
+    const c = document.getElementById('goals-content'); if (!DB.goals.length) { c.innerHTML = '<p class="empty-state">No hay objetivos fijados.</p>'; return; }
+    c.innerHTML = DB.goals.map(g => {
+        const pr = getGoalProgress(g), pv = g.target > 0 ? (pr / g.target) * 100 : 0, ic = pv >= 100;
+        return `<div class="idx-card" onclick="openEditGoal('${g.id}')"><div class="idx-top"><div class="idx-title-wrap"><span class="idx-title">${esc(g.name)}</span><span class="idx-type">${g.cid?'Categoría':'Manual'}</span></div><div class="idx-val">${fmt(pr)}</div></div><div class="idx-meta"><span>OBJ: ${fmt(g.target)}</span><span>${Math.min(100, pv).toFixed(1)}%</span></div><div class="prog-line"><div class="prog-fill" style="width:${Math.min(100, pv)}%"></div></div>${g.mode === 'manual' ? `<button class="btn-ghost" style="margin-top:16px; margin-bottom:0; padding:12px;" onclick="event.stopPropagation();openGoalDeposit('${g.id}')">Liquidar</button>` : ''}</div>`;
+    }).join('');
+}
+
+/* ==========================================================================
+   DOM & MODALS
+   ========================================================================== */
+function populateCatSelect(el, includeNone = false) { let o = includeNone ? '<option value="">(Sin categoría)</option>' : ''; o += DB.groups.map(g => `<optgroup label="${esc(g.name)}">${g.cats.map(c => `<option value="${c.id}">${c.emoji} ${esc(c.name)}</option>`).join('')}</optgroup>`).join(''); el.innerHTML = o; }
+function populateAcctSelect(el, excludeId = null) { el.innerHTML = DB.accounts.filter(a => a.id !== excludeId).map(a => `<option value="${a.id}">${a.emoji} ${esc(a.name)}</option>`).join(''); }
+
+function nav(e, p) { document.querySelectorAll('.panel').forEach(el => el.classList.remove('on')); document.getElementById('panel-' + p).classList.add('on'); document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('on')); e.currentTarget.classList.add('on'); }
+
+function openSheet(id) {
+    if (id === 'tx') { populateCatSelect(document.getElementById('f-cat'), true); setAdjustSign(1); }
+    if (id === 'assign') { populateCatSelect(document.getElementById('a-cat'), false); document.getElementById('a-amt').value = ''; }
+    if (id === 'new-group') document.getElementById('n-g-name').value = '';
+    document.getElementById('ov-' + id).classList.add('open');
+}
+function openSheetDirect(id) { document.getElementById('ov-' + id).classList.add('open'); }
+function closeSheet() { document.querySelectorAll('.overlay').forEach(o => o.classList.remove('open')); }
+
+function confirmAction(msg, cb) { confirmCallback = cb; document.getElementById('confirm-msg').innerHTML = msg; document.getElementById('confirm-yes').style.display = 'block'; document.getElementById('confirm-cancel').textContent = 'Anular'; document.getElementById('ov-confirm').classList.add('open'); }
+function showAlert(msg) { confirmCallback = null; document.getElementById('confirm-msg').innerHTML = msg; document.getElementById('confirm-yes').style.display = 'none'; document.getElementById('confirm-cancel').textContent = 'Comprendido'; document.getElementById('ov-confirm').classList.add('open'); }
+function closeConfirm() { document.getElementById('ov-confirm').classList.remove('open'); }
+function handleConfirmYes() { const cb = confirmCallback; closeConfirm(); if (cb) cb(); confirmCallback = null; }
+
+/* ==========================================================================
+   CRUD LOGIC
+   ========================================================================== */
+function openNewAccount() { activeAcctId = null; document.getElementById('acct-modal-title').innerText = 'Entidad'; document.getElementById('n-a-emoji').value = ''; document.getElementById('n-a-name').value = ''; document.getElementById('n-a-type').value = 'checking'; document.getElementById('acct-create-box').style.display = 'block'; document.getElementById('acct-edit-box').style.display = 'none'; openSheetDirect('account'); }
+function openEditAccount(id) { activeAcctId = id; const a = findAcct(id); if (!a) return; document.getElementById('acct-modal-title').innerText = 'Ficha de Entidad'; document.getElementById('n-a-emoji').value = a.emoji; document.getElementById('n-a-name').value = a.name; document.getElementById('n-a-type').value = a.type; document.getElementById('acct-create-box').style.display = 'none'; document.getElementById('acct-edit-box').style.display = 'flex'; openSheetDirect('account'); }
+function saveAccount() { const n = document.getElementById('n-a-name').value.trim(); if (!n) return; pushUndo(); DB.accounts.push({ id: 'acc_' + Date.now(), name: n, emoji: document.getElementById('n-a-emoji').value.trim() || '—', type: document.getElementById('n-a-type').value }); commit(['accounts', 'tx']); }
+function updateAccount() { const a = findAcct(activeAcctId); if (!a) return; const n = document.getElementById('n-a-name').value.trim(); if (!n) return; pushUndo(); a.name = n; a.emoji = document.getElementById('n-a-emoji').value.trim() || '—'; a.type = document.getElementById('n-a-type').value; commit(['accounts', 'tx']); }
+function deleteAccount() { const a = findAcct(activeAcctId); if (!a) return; if (DB.accounts.length <= 1) { showAlert('Sistema requiere una cuenta mínima.'); return; } confirmAction(`¿Clausurar "${esc(a.name)}"?`, function() { pushUndo(); const fb = DB.accounts.find(x => x.id !== activeAcctId).id; DB.txs.forEach(t => { if (t.acct === activeAcctId) t.acct = fb; if (t.acctFrom === activeAcctId) t.acctFrom = fb; if (t.acctTo === activeAcctId) t.acctTo = fb; }); DB.accounts = DB.accounts.filter(x => x.id !== activeAcctId); commit(['all']); }); }
+
+function setAdjustSign(s) { adjustSign = s; document.getElementById('adj-pos').className = 'seg-tab' + (s === 1 ? ' active' : ''); document.getElementById('adj-neg').className = 'seg-tab' + (s === -1 ? ' active' : ''); }
+function openNewTx() { activeTxId = null; document.getElementById('tx-title').innerText = 'Asiento Contable'; document.getElementById('f-amt').value = ''; document.getElementById('f-payee').value = ''; document.getElementById('f-date').value = getCurMonthDateDefault(); document.getElementById('f-cat-wrap').style.display = 'block'; document.getElementById('tx-create-box').style.display = 'block'; document.getElementById('tx-edit-box').style.display = 'none'; populateAcctSelect(document.getElementById('f-acct')); populateAcctSelect(document.getElementById('f-acct-to')); openSheet('tx'); }
+function openEditTx(id) { activeTxId = id; const t = DB.txs.find(x => String(x.id) === String(id)); if (!t) return; document.getElementById('tx-title').innerText = 'Revisión Contable'; document.getElementById('f-amt').value = t.type === 'adjustment' ? Math.abs(t.amt) : t.amt; document.getElementById('f-payee').value = t.payee; document.getElementById('f-date').value = t.date; document.getElementById('f-cat-wrap').style.display = (t.type === 'adjustment' || t.type === 'transfer') ? 'none' : 'block'; document.getElementById('tx-create-box').style.display = 'none'; document.getElementById('tx-edit-box').style.display = 'flex'; populateAcctSelect(document.getElementById('f-acct')); document.getElementById('f-acct').value = t.type === 'transfer' ? (t.acctFrom || '') : (t.acct || ''); openSheet('tx'); if (t.type === 'expense' || t.type === 'income') document.getElementById('f-cat').value = t.cat || ''; }
+function saveTxFlow() { const a = parseFloat(document.getElementById('f-amt').value); if (isNaN(a) || a <= 0) return; const t = adjustSign === 1 ? 'income' : 'expense'; saveTx(t); }
+function saveTx(type) { const raw = parseFloat(document.getElementById('f-amt').value); if (isNaN(raw) || raw <= 0) return; const date = document.getElementById('f-date').value; if (!date) return; const acct = document.getElementById('f-acct').value; if (!acct) return; pushUndo(); if (type === 'transfer') { const to = document.getElementById('f-acct-to').value; if (!to || to === acct) { showAlert('Error en correspondencia.'); return; } DB.txs.push({ id: Date.now(), amt: r(raw), type: 'transfer', acctFrom: acct, acctTo: to, payee: document.getElementById('f-payee').value.trim() || 'Traspaso', date }); } else if (type === 'adjustment') { DB.txs.push({ id: Date.now(), amt: r(raw * adjustSign), type: 'adjustment', acct, cat: '', payee: document.getElementById('f-payee').value.trim() || 'Ajuste', date }); } else { DB.txs.push({ id: Date.now(), amt: r(raw), type, acct, cat: document.getElementById('f-cat').value, payee: document.getElementById('f-payee').value.trim(), date }); } commit(['all']); }
+function updateTx() { const t = DB.txs.find(x => String(x.id) === String(activeTxId)); if (!t) return; const na = parseFloat(document.getElementById('f-amt').value); if (isNaN(na) || na <= 0) return; const nd = document.getElementById('f-date').value; if (!nd) return; const nac = document.getElementById('f-acct').value; pushUndo(); if (t.type === 'adjustment') { t.amt = r(na * (t.amt >= 0 ? 1 : -1)); t.acct = nac; } else if (t.type === 'transfer') { t.amt = r(na); t.acctFrom = nac; } else { t.amt = r(na); t.acct = nac; if (t.type === 'expense' || t.type === 'income') t.cat = document.getElementById('f-cat').value; } t.payee = document.getElementById('f-payee').value.trim(); t.date = nd; commit(['all']); }
+function deleteTx() { confirmAction('¿Suprimir apunte?', function() { pushUndo(); DB.txs = DB.txs.filter(x => String(x.id) !== String(activeTxId)); commit(['all']); }); }
+
+function onGoalModeChange() { document.getElementById('goal-cat-section').style.display = document.getElementById('n-l-mode').value === 'linked' ? 'block' : 'none'; }
+function openNewGoal() { activeGoalId = null; document.getElementById('goal-modal-title').innerText = 'Nuevo Objetivo'; document.getElementById('n-l-name').value = ''; document.getElementById('n-l-target').value = ''; document.getElementById('n-l-date').value = ''; document.getElementById('n-l-mode').value = 'linked'; document.getElementById('goal-create-box').style.display = 'block'; document.getElementById('goal-edit-box').style.display = 'none'; document.getElementById('goal-edit-progress-wrap').style.display = 'none'; populateCatSelect(document.getElementById('n-l-cat'), false); onGoalModeChange(); openSheetDirect('goal'); }
+function openEditGoal(id) { activeGoalId = id; const g = DB.goals.find(x => String(x.id) === String(id)); if (!g) return; document.getElementById('goal-modal-title').innerText = 'Ficha Objetivo'; document.getElementById('n-l-name').value = g.name; document.getElementById('n-l-target').value = g.target; document.getElementById('n-l-mode').value = g.mode || 'linked'; document.getElementById('goal-create-box').style.display = 'none'; document.getElementById('goal-edit-box').style.display = 'flex'; populateCatSelect(document.getElementById('n-l-cat'), false); document.getElementById('n-l-cat').value = g.cid || ''; document.getElementById('n-l-date').value = g.date || ''; document.getElementById('goal-edit-progress').innerHTML = `${fmt(getGoalProgress(g))}`; document.getElementById('goal-edit-progress-wrap').style.display = 'block'; onGoalModeChange(); openSheetDirect('goal'); }
+function saveGoal() { const n = document.getElementById('n-l-name').value.trim(), t = parseFloat(document.getElementById('n-l-target').value), m = document.getElementById('n-l-mode').value, ci = document.getElementById('n-l-cat').value; if (!n || isNaN(t) || t <= 0) return; if (m === 'linked' && findGoalByCat(ci)) { showAlert('Conflicto estructural.'); return; } pushUndo(); DB.goals.push({ id: Date.now(), name: n, target: r(t), date: document.getElementById('n-l-date').value, mode: m, cid: m === 'linked' ? ci : '', saved: m === 'manual' ? 0 : undefined }); commit(['goals', 'budget']); }
+function updateGoal() { const g = DB.goals.find(x => String(x.id) === String(activeGoalId)); if (!g) return; const n = document.getElementById('n-l-name').value.trim(), t = parseFloat(document.getElementById('n-l-target').value), m = document.getElementById('n-l-mode').value, ci = document.getElementById('n-l-cat').value; if (!n || isNaN(t) || t <= 0) return; const e = findGoalByCat(ci); if (m === 'linked' && e && String(e.id) !== String(activeGoalId)) { showAlert('Conflicto.'); return; } pushUndo(); g.name = n; g.target = r(t); g.mode = m; g.cid = m === 'linked' ? ci : ''; g.date = document.getElementById('n-l-date').value; if (m === 'manual' && g.saved === undefined) g.saved = 0; commit(['goals', 'budget']); }
+function deleteGoalAction() { confirmAction('¿Abandonar objetivo?', function() { pushUndo(); DB.goals = DB.goals.filter(x => String(x.id) !== String(activeGoalId)); commit(['goals', 'budget']); }); }
+function openGoalDeposit(id) { activeGoalId = id; const g = DB.goals.find(x => String(x.id) === String(id)); if (!g || g.mode !== 'manual') return; document.getElementById('deposit-goal-name').innerText = g.name; document.getElementById('deposit-goal-progress').innerText = `Provisión: ${fmt(g.saved || 0)}`; document.getElementById('dep-amt').value = ''; openSheetDirect('goal-deposit'); }
+function doGoalDeposit(sign) { const g = DB.goals.find(x => String(x.id) === String(activeGoalId)); if (!g || g.mode !== 'manual') return; const a = parseFloat(document.getElementById('dep-amt').value); if (isNaN(a) || a <= 0) return; pushUndo(); g.saved = Math.max(0, r((g.saved || 0) + (a * sign))); commit(['goals']); }
+
+function openEditGroup(id) { activeGroupId = id; const g = DB.groups.find(x => x.id === id); if (!g) return; document.getElementById('e-g-name').value = g.name; openSheet('edit-group'); }
+function updateGroup() { const g = DB.groups.find(x => x.id === activeGroupId); if (!g) return; const n = document.getElementById('e-g-name').value.trim(); if (!n) return; pushUndo(); g.name = n; commit(['budget']); }
+function deleteGroup() { const group = DB.groups.find(x => x.id === activeGroupId); if (!group) return; confirmAction('¿Extirpar sección completa?', function() { pushUndo(); const catIds = group.cats.map(c => c.id); DB.goals.filter(g => g.mode === 'linked' && catIds.includes(g.cid)).forEach(g => { g.cid = ''; }); Object.keys(DB.assignments).forEach(month => { catIds.forEach(cid => { delete DB.assignments[month][cid]; }); }); DB.groups = DB.groups.filter(x => x.id !== activeGroupId); commit(['all']); }); }
+function addGroup() { const n = document.getElementById('n-g-name').value.trim(); if (!n) return; pushUndo(); DB.groups.push({ id: 'g' + Date.now(), name: n, cats: [] }); commit(['budget']); }
+
+function openAddCat(gid) { activeGroupId = gid; document.getElementById('n-c-emoji').value = ''; document.getElementById('n-c-name').value = ''; openSheet('new-cat'); }
+function addCat() { const n = document.getElementById('n-c-name').value.trim(), e = document.getElementById('n-c-emoji').value.trim(), g = DB.groups.find(x => x.id === activeGroupId); if (!n || !g) return; pushUndo(); g.cats.push({ id: 'c' + Date.now(), name: n, emoji: e || '—' }); commit(['budget']); }
+function openEditCat(id) { activeCatId = id; const c = findCat(id); if (!c) return; document.getElementById('e-c-name').value = c.name; document.getElementById('e-c-emoji').value = c.emoji; const lg = findGoalByCat(id), inf = document.getElementById('cat-goal-info'); if (lg) { inf.style.display = 'block'; document.getElementById('cat-goal-name').innerText = lg.name; } else { inf.style.display = 'none'; } openSheet('edit-cat'); }
+function updateCat() { const c = findCat(activeCatId); if (!c) return; const n = document.getElementById('e-c-name').value.trim(); if (!n) return; pushUndo(); c.name = n; c.emoji = document.getElementById('e-c-emoji').value.trim() || '—'; commit(['all']); }
+function deleteCat() { confirmAction('¿Extirpar línea?', function() { pushUndo(); const lg = findGoalByCat(activeCatId); if (lg) lg.cid = ''; Object.keys(DB.assignments).forEach(month => { delete DB.assignments[month][activeCatId]; }); DB.groups.forEach(g => { g.cats = g.cats.filter(x => x.id !== activeCatId); }); commit(['all']); }); }
+
+function setAssignMode(m) { assignMode = m; document.getElementById('tab-set').className = 'seg-tab' + (m === 'set' ? ' active' : ''); document.getElementById('tab-add').className = 'seg-tab' + (m === 'add' ? ' active' : ''); document.getElementById('ac-hint').innerText = m === 'set' ? 'Establecer base.' : 'Ajustar proyección.'; }
+function openAssignCat(cid) { assignCatId = cid; const cat = findCat(cid); if (!cat) return; const mk = getMk(curMonth), ca = DB.assignments[mk]?.[cid] || 0, av = getAvail(cid, curMonth), sp = DB.txs.filter(t => t.cat === cid && getMk(t.date) === mk).reduce((s, t) => { if (t.type === 'expense') return r(s + t.amt); if (t.type === 'income') return r(s - t.amt); return s; }, 0); document.getElementById('ac-cat-name').innerText = cat.name; document.getElementById('ac-current').innerText = fmt(ca); document.getElementById('ac-avail').innerText = fmt(av); document.getElementById('ac-spent').innerText = fmt(sp); document.getElementById('ac-amt').value = ''; setAssignMode('set'); openSheetDirect('assign-cat'); }
+function confirmAssignCat() { const v = parseFloat(document.getElementById('ac-amt').value); if (isNaN(v)) return; pushUndo(); const mk = getMk(curMonth); if (!DB.assignments[mk]) DB.assignments[mk] = {}; if (assignMode === 'set') { if (v < 0) return; DB.assignments[mk][assignCatId] = r(v); } else { DB.assignments[mk][assignCatId] = r((DB.assignments[mk][assignCatId] || 0) + v); } commit(['budget', 'goals']); }
+function confirmAssign() { const ci = document.getElementById('a-cat').value, a = parseFloat(document.getElementById('a-amt').value), mk = getMk(curMonth); if (!ci || isNaN(a)) return; pushUndo(); if (!DB.assignments[mk]) DB.assignments[mk] = {}; DB.assignments[mk][ci] = r((DB.assignments[mk][ci] || 0) + a); commit(['budget', 'goals']); }
+
+function exportData() { try { const j = JSON.stringify(DB, null, 2), fn = 'vellum_ledger.json'; if (navigator.share && navigator.canShare) { const f = new File([j], fn, { type: 'application/octet-stream' }); if (navigator.canShare({ files: [f] })) { navigator.share({ files: [f] }).catch(() => {}); return; } } const b = new Blob([j], { type: 'application/json' }), u = URL.createObjectURL(b), a = document.createElement('a'); a.href = u; a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(u); } catch (e) { showAlert('Error en volcado.'); } }
+function importData(ev) { const f = ev.target.files[0]; if (!f) return; const r = new FileReader(); r.onload = function(e) { try { const p = JSON.parse(e.target.result); if (!p.groups || !p.txs) { showAlert('Sintaxis inválida.'); return; } DB = { assignments: p.assignments || {}, goals: p.goals || [], accounts: p.accounts || [], groups: p.groups, txs: p.txs }; migrateDB(); save(); updateUI(['all']); showAlert('Lectura completada.'); } catch (err) { showAlert('Corrupción de archivo.'); } }; r.readAsText(f); ev.target.value = ''; }
+function registerSW() { if ('serviceWorker' in navigator) { const sw = `const C = 'vellum-v1'; self.addEventListener('install', e => { self.skipWaiting(); }); self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== C).map(k => caches.delete(k))))); }); self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); });`; navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw], { type: 'text/javascript' }))).catch(() => {}); } }
+function resetApp() { localStorage.removeItem('ma_pergamino_v9'); localStorage.removeItem('ma_pergamino_v8'); location.reload(); }
+</script>
 </body>
 </html>
+
+
