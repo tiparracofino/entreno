@@ -1,1 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi AI Coach</title>
+    <style>
+        /* Estilos básicos para que se vea como una App nativa en Safari iOS */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            padding: 20px; 
+            background: #f2f2f7; /* Color de fondo típico de iOS */
+            margin: 0;
+        }
+        .container { 
+            max-width: 100%; 
+            background: white; 
+            padding: 25px 20px; 
+            border-radius: 16px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05); 
+        }
+        h1 { text-align: center; color: #1c1c1e; font-size: 24px; }
+        label { font-weight: 600; margin-top: 15px; display: block; color: #3a3a3c; font-size: 14px;}
+        input, textarea, button { 
+            width: 100%; 
+            margin-top: 8px; 
+            margin-bottom: 10px; 
+            padding: 12px; 
+            border-radius: 10px; 
+            border: 1px solid #c7c7cc; 
+            box-sizing: border-box; 
+            font-size: 16px; /* Evita el zoom automático en Safari */
+        }
+        button { 
+            background: #007aff; /* Azul Apple */
+            color: white; 
+            font-weight: bold; 
+            border: none; 
+            cursor: pointer; 
+            margin-top: 20px;
+        }
+        button:active { background: #005bb5; }
+        #resultado { 
+            background: #e5f1ff; 
+            padding: 15px; 
+            border-radius: 12px; 
+            display: none; 
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏃‍♂️ AI Coach</h1>
+        
+        <label for="comida">¿Qué has comido hoy?</label>
+        <textarea id="comida" rows="3" placeholder="Ej: 200g de pollo, arroz y una manzana..."></textarea>
+        
+        <label for="pantallazo">Pantallazo de Salud/Métricas:</label>
+        <input type="file" id="pantallazo" accept="image/*">
+        
+        <button onclick="generarPlan()">Generar Plan de Entreno</button>
+        
+        <div id="resultado">
+            <h3 style="margin-top:0; color: #007aff;">Tu Plan de Hoy:</h3>
+            <p id="planTexto" style="color: #333; line-height: 1.5;">Cargando...</p>
+        </div>
+    </div>
+
+    <script>
+        // Esta es la función que hace la magia cuando pulsas el botón
+        async function generarPlan() {
+            const comida = document.getElementById('comida').value;
+            const pantallazo = document.getElementById('pantallazo').files[0];
+            const resultadoDiv = document.getElementById('resultado');
+            const planTexto = document.getElementById('planTexto');
+
+            // 1. Mostramos la interfaz de carga
+            resultadoDiv.style.display = 'block';
+            planTexto.innerText = "Analizando tus macros y métricas del Apple Watch...";
+
+            // 2. AQUÍ CONECTAREMOS CON LA IA EN EL FUTURO
+            // Por ahora, como es la base, hacemos una simulación (mock) que tarda 2 segundos.
+            
+            setTimeout(() => {
+                if(!pantallazo && !comida) {
+                    planTexto.innerText = "⚠️ Por favor, añade tus comidas o sube un pantallazo para poder personalizar tu entrenamiento.";
+                    return;
+                }
+                
+                // Simulación de lo que te respondería la IA
+                planTexto.innerHTML = `
+                <strong>Día 1: Fuerza (Tren Inferior)</strong><br><br>
+                He analizado tu comida. Tienes buena carga de hidratos por el arroz. Vamos a aprovecharlos:<br><br>
+                - Sentadillas búlgaras: 3x10<br>
+                - Peso muerto rumano: 4x8<br>
+                - Planchas: 3x45 seg<br><br>
+                <em>Sube tu pantallazo de frecuencia cardíaca al terminar para registrar la carga de mañana.</em>`;
+            }, 2000);
+            
+            /* --- NOTA PARA EL FUTURO ---
+            Cuando quieras que esto funcione de verdad con inteligencia artificial, 
+            aquí haremos un "fetch" (una llamada HTTP) enviando la foto y el texto 
+            a una API externa (como la API de Gemini) para que te devuelva el texto real.
+            */
+        }
+    </script>
+</body>
+</html>
 
